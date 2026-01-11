@@ -20,7 +20,7 @@ You are an autonomous coding agent working on a software project.
 APPEND to progress.txt (never replace, always append):
 ```
 ## [Date/Time] - [Story ID]
-Thread: https://ampcode.com/threads/$AMP_CURRENT_THREAD_ID
+Session: <session-id>
 - What was implemented
 - Files changed
 - **Learnings for future iterations:**
@@ -30,7 +30,16 @@ Thread: https://ampcode.com/threads/$AMP_CURRENT_THREAD_ID
 ---
 ```
 
-Include the thread URL so future iterations can use the `read_thread` tool to reference previous work if needed.
+**Getting Session ID**: Run this command to get your current session ID:
+```bash
+project_encoded=$(pwd | tr '/' '-' | sed 's/^-//')
+session_file=$(stat -c '%Y %n' ~/.claude/projects/-${project_encoded}/*.jsonl 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+basename "$session_file" .jsonl
+```
+
+Include the session ID so future iterations can resume context if needed using `claude --resume <session-id>`.
+
+The progress.txt file serves as persistent context between sessions. Always read it first to understand what previous iterations accomplished and learned.
 
 The learnings section is critical - it helps future iterations avoid repeating mistakes and understand the codebase better.
 
@@ -84,8 +93,8 @@ Only update AGENTS.md if you have **genuinely reusable knowledge** that would he
 
 For any story that changes UI, you MUST verify it works in the browser:
 
-1. Load the `dev-browser` skill
-2. Navigate to the relevant page
+1. Ensure the dev server is running (start it if needed)
+2. Use available browser/screenshot tools to navigate to the relevant page
 3. Verify the UI changes work as expected
 4. Take a screenshot if helpful for the progress log
 
