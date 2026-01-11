@@ -91,10 +91,16 @@ Only update AGENTS.md if you have **genuinely reusable knowledge** that would he
 
 ## Browser Testing (Required for Frontend Stories)
 
-For any story that changes UI, you MUST verify it works in the browser:
+For any story that changes UI, you MUST verify it works in the browser using Playwright MCP.
 
+**Setup** (if not already configured):
+```bash
+claude mcp add playwright npx '@playwright/mcp@latest'
+```
+
+**Verification steps:**
 1. Ensure the dev server is running (start it if needed)
-2. Use available browser/screenshot tools to navigate to the relevant page
+2. Use Playwright MCP to navigate to the relevant page
 3. Verify the UI changes work as expected
 4. Take a screenshot if helpful for the progress log
 

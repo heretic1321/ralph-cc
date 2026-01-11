@@ -46,7 +46,7 @@ Take a PRD (markdown file or text) and convert it to `prd.json` in your ralph di
 
 **Each story must be completable in ONE Ralph iteration (one context window).**
 
-Ralph spawns a fresh Amp instance per iteration with no memory of previous work. If a story is too big, the LLM runs out of context before finishing and produces broken code.
+Ralph spawns a fresh Claude Code instance per iteration with no memory of previous work. If a story is too big, the LLM runs out of context before finishing and produces broken code.
 
 ### Right-sized stories:
 - Add a database column and migration
@@ -108,10 +108,10 @@ For stories with testable logic, also include:
 
 ### For stories that change UI, also include:
 ```
-"Verify in browser using dev-browser skill"
+"Verify in browser using Playwright MCP"
 ```
 
-Frontend stories are NOT complete until visually verified. Ralph will use the dev-browser skill to navigate to the page, interact with the UI, and confirm changes work.
+Frontend stories are NOT complete until visually verified. Ralph will use the Playwright MCP to navigate to the page, interact with the UI, and confirm changes work.
 
 ---
 
@@ -188,7 +188,7 @@ Add ability to mark tasks with different statuses.
         "Each task card shows colored status badge",
         "Badge colors: gray=pending, blue=in_progress, green=done",
         "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Verify in browser using Playwright MCP"
       ],
       "priority": 2,
       "passes": false,
@@ -203,7 +203,7 @@ Add ability to mark tasks with different statuses.
         "Changing status saves immediately",
         "UI updates without page refresh",
         "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Verify in browser using Playwright MCP"
       ],
       "priority": 3,
       "passes": false,
@@ -217,7 +217,7 @@ Add ability to mark tasks with different statuses.
         "Filter dropdown: All | Pending | In Progress | Done",
         "Filter persists in URL params",
         "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Verify in browser using Playwright MCP"
       ],
       "priority": 4,
       "passes": false,
@@ -252,6 +252,30 @@ Before writing prd.json, verify:
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] Stories are ordered by dependency (schema to backend to UI)
 - [ ] Every story has "Typecheck passes" as criterion
-- [ ] UI stories have "Verify in browser using dev-browser skill" as criterion
+- [ ] UI stories have "Verify in browser using Playwright MCP" as criterion
 - [ ] Acceptance criteria are verifiable (not vague)
 - [ ] No story depends on a later story
+
+---
+
+## Session Tracking (Claude Code)
+
+When working with Ralph, record your session ID in progress.txt so future iterations can reference your work if needed.
+
+**Getting Session ID**: Run this command to get your current session ID:
+```bash
+project_encoded=$(pwd | tr '/' '-' | sed 's/^-//')
+session_file=$(stat -c '%Y %n' ~/.claude/projects/-${project_encoded}/*.jsonl 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+basename "$session_file" .jsonl
+```
+
+Include the session ID in your progress.txt entries:
+```
+## [Date/Time] - [Story ID]
+Session: <session-id>
+- What was implemented
+- Files changed
+- Learnings for future iterations
+```
+
+Future iterations can resume context using `claude --resume <session-id>` if deeper context is needed.
