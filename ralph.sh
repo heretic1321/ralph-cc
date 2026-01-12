@@ -59,9 +59,9 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS"
   echo "═══════════════════════════════════════════════════════"
   
-  # Run claude with the ralph prompt
+  # Run claude with the ralph prompt (--chrome enables browser testing for frontend stories)
   PROMPT=$(cat "$SCRIPT_DIR/prompt.md")
-  OUTPUT=$(claude -p "$PROMPT" --dangerously-skip-permissions 2>&1 | tee /dev/stderr) || true
+  OUTPUT=$(claude -p "$PROMPT" --chrome --dangerously-skip-permissions 2>&1 | tee /dev/stderr) || true
   
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then

@@ -158,20 +158,34 @@ npm run build  # Build
 
 ## Browser Testing (Required for Frontend Stories)
 
-For any story that changes UI, you MUST verify it works in the browser using Playwright MCP.
+For any story that changes UI, you MUST verify it works in the browser using Chrome. Ralph runs with the `--chrome` flag which gives you direct browser access.
 
-**Setup** (if not already configured):
-```bash
-claude mcp add playwright npx '@playwright/mcp@latest'
-```
+**What counts as a frontend story:**
+- Any story that adds, modifies, or removes UI elements
+- Any story involving user interactions (buttons, forms, navigation)
+- Any story that changes visual appearance or layout
 
 **Verification steps:**
 1. Ensure the dev server is running (start it if needed)
-2. Use Playwright MCP to navigate to the relevant page
-3. Verify the UI changes work as expected
-4. Take a screenshot if helpful for the progress log
+2. Navigate to the relevant page in Chrome
+3. **Test EVERY interactive element** you created or modified:
+   - Click all buttons and verify they trigger the correct action
+   - Fill out forms and verify validation and submission
+   - Test navigation links and verify correct routing
+   - Verify loading states, success messages, and error handling
+4. **Verify the response is correct:**
+   - Check that data is displayed correctly
+   - Verify API calls return expected results (check network tab if needed)
+   - Confirm state updates correctly after user actions
+5. Take screenshots of key states for the progress log
 
-A frontend story is NOT complete until browser verification passes.
+**A frontend story is NOT complete until:**
+- Every button/interactive element has been manually tested in Chrome
+- All expected behaviors work correctly
+- Error states have been tested (where applicable)
+- The feature matches the acceptance criteria visually and functionally
+
+Do NOT mark a frontend story as `passes: true` based only on unit tests passing. The true test is the actual browser behavior.
 
 ## Stop Condition
 
