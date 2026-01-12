@@ -6,13 +6,13 @@ You are an autonomous coding agent working on a software project.
 
 1. Read the PRD at `prd.json` (in the same directory as this file)
 2. Read the progress log at `progress.txt` (check Codebase Patterns section first)
-3. Read `CLAUDE.md` if it exists (project-wide patterns and commands)
+3. Read `.claude/CLAUDE.md` if it exists (project-wide patterns and commands)
 4. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
 5. Pick the **highest priority** user story where `passes: false`
 6. Implement that single user story
 7. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
-8. Update AGENTS.md files if you discover folder-specific patterns (see below)
-9. Update CLAUDE.md if you discover project-wide patterns (see below)
+8. Create or update AGENTS.md files for folders you modified (see below)
+9. Update `.claude/CLAUDE.md` if you discover project-wide patterns (see below)
 10. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
 11. Update the PRD to set `passes: true` for the completed story
 12. Append your progress to `progress.txt`
@@ -58,37 +58,120 @@ If you discover a **reusable pattern** that future iterations should know, add i
 
 Only add patterns that are **general and reusable**, not story-specific details.
 
-## Update AGENTS.md Files
+## Create and Update AGENTS.md Files
 
-Before committing, check if any edited files have learnings worth preserving in nearby AGENTS.md files:
+AGENTS.md files provide folder-specific context for AI agents and developers. **If a folder you modified does NOT have an AGENTS.md, CREATE ONE.**
 
-1. **Identify directories with edited files** - Look at which directories you modified
-2. **Check for existing AGENTS.md** - Look for AGENTS.md in those directories or parent directories
-3. **Add valuable learnings** - If you discovered something future developers/agents should know:
-   - API patterns or conventions specific to that module
-   - Gotchas or non-obvious requirements
-   - Dependencies between files
-   - Testing approaches for that area
-   - Configuration or environment requirements
+### When to Create AGENTS.md
 
-**Examples of good AGENTS.md additions:**
-- "When modifying X, also update Y to keep them in sync"
-- "This module uses pattern Z for all API calls"
-- "Tests require the dev server running on PORT 3000"
-- "Field names must match the template exactly"
+Create an AGENTS.md in a folder when:
+- You modified files in a folder that lacks one
+- The folder contains important business logic, components, or utilities
+- The folder has non-obvious patterns that future work needs to understand
 
-**Do NOT add:**
+**Priority folders** (always ensure these have AGENTS.md):
+- `src/components/` or UI component directories
+- `src/api/` or API route directories
+- `src/lib/` or shared utility directories
+- `src/hooks/` or custom hooks directories
+- Any folder with 5+ files you touched
+
+### AGENTS.md Template
+
+```markdown
+# [Folder Name]
+
+## Purpose
+[1-2 sentences: What this folder contains and why it exists]
+
+## Structure
+\`\`\`
+folder/
+├── index.ts          # Public exports
+├── types.ts          # Shared types
+├── [subfolder]/      # [Brief description]
+└── ...
+\`\`\`
+
+## Key Files
+| File | Purpose |
+|------|---------|
+| `filename.ts` | [What it does, when to modify it] |
+
+## Conventions
+
+### Naming
+- Components: PascalCase (e.g., `UserCard.tsx`)
+- Utilities: camelCase (e.g., `formatDate.ts`)
+- Types: PascalCase with suffix (e.g., `UserProps`, `ApiResponse`)
+
+### Patterns
+[Code example showing the pattern to follow]
+\`\`\`typescript
+// ✅ Do this
+export function doSomething() { ... }
+
+// ❌ Not this
+function doSomething() { ... }
+\`\`\`
+
+## Do NOT
+- [Specific anti-pattern to avoid]
+- [Another thing that breaks stuff]
+
+## Gotchas
+- **[Issue]**: [What happens] → [How to fix]
+- **[Another issue]**: [Explanation]
+
+## Dependencies
+- Depends on: `../other-folder` for [reason]
+- Used by: `../consumer` for [reason]
+```
+
+### AGENTS.md Examples
+
+**Good AGENTS.md content:**
+```markdown
+## Conventions
+### API Calls
+Always use the `fetchWithAuth` wrapper, never raw `fetch`:
+\`\`\`typescript
+// ✅ Correct
+const data = await fetchWithAuth('/api/users')
+
+// ❌ Wrong - bypasses auth and error handling
+const data = await fetch('/api/users')
+\`\`\`
+
+## Do NOT
+- Import from `../components` directly - use the barrel export from `@/components`
+- Use `any` type - define proper types in `types.ts`
+- Mutate state directly - always use setState or dispatch
+
+## Gotchas
+- **CSS Modules**: Class names are camelCase in JS (`styles.userName`), not kebab-case
+- **Server Components**: Cannot use `useState` or `useEffect` - mark with `'use client'` if needed
+```
+
+### Updating Existing AGENTS.md
+
+When an AGENTS.md already exists:
+1. Read it first to understand existing patterns
+2. Add new learnings to the appropriate section
+3. Update outdated information if you find it incorrect
+4. Keep entries concise - link to code rather than duplicating it
+
+**Do NOT add to AGENTS.md:**
 - Story-specific implementation details
 - Temporary debugging notes
-- Information already in progress.txt
+- Information that belongs in code comments
+- Duplicate information from progress.txt
 
-Only update AGENTS.md if you have **genuinely reusable knowledge** that would help future work in that directory.
+## Update .claude/CLAUDE.md (Project-Wide Patterns)
 
-## Update CLAUDE.md (Project-Wide Patterns)
+`.claude/CLAUDE.md` stores **project-wide** patterns, commands, and conventions. This is where Claude Code looks for project context. Unlike AGENTS.md (folder-specific), CLAUDE.md applies to the entire project.
 
-CLAUDE.md stores **project-wide** patterns, commands, and conventions. Unlike AGENTS.md (folder-specific), CLAUDE.md applies to the entire project.
-
-### When to Update CLAUDE.md
+### When to Update .claude/CLAUDE.md
 
 | Discovery | Section to Update |
 |-----------|-------------------|
@@ -99,9 +182,9 @@ CLAUDE.md stores **project-wide** patterns, commands, and conventions. Unlike AG
 | Something that broke unexpectedly | Known Gotchas |
 | Files that shouldn't be touched | Boundaries |
 
-### Creating CLAUDE.md (if it doesn't exist)
+### Creating .claude/CLAUDE.md (if it doesn't exist)
 
-If this is a new project without CLAUDE.md, create one with basic structure:
+If this is a new project without `.claude/CLAUDE.md`, create the `.claude/` directory and CLAUDE.md with basic structure:
 
 ```markdown
 # [Project Name]
@@ -201,6 +284,7 @@ If there are still stories with `passes: false`, end your response normally (ano
 - Work on ONE story per iteration
 - Commit frequently
 - Keep CI green
-- Read CLAUDE.md and Codebase Patterns section in progress.txt before starting
-- Update CLAUDE.md with project-wide learnings (commands, versions, gotchas)
-- Update AGENTS.md with folder-specific learnings
+- Read `.claude/CLAUDE.md` and Codebase Patterns section in progress.txt before starting
+- Update `.claude/CLAUDE.md` with project-wide learnings (commands, versions, gotchas)
+- **Create** AGENTS.md in folders you modify if they don't have one
+- Update existing AGENTS.md with folder-specific learnings
