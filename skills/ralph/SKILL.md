@@ -5,7 +5,7 @@ description: "Convert PRDs to prd.json format for the Ralph autonomous agent sys
 
 # Ralph PRD Converter
 
-Converts existing PRDs to the prd.json format that Ralph uses for autonomous execution.
+Converts existing PRDs to the prd.json format that Ralph uses for autonomous execution. Stories are organized as a **dependency tree** to enable parallel execution.
 
 ---
 
@@ -32,13 +32,41 @@ Take a PRD (markdown file or text) and convert it to `prd.json` in your ralph di
         "Criterion 2",
         "Typecheck passes"
       ],
-      "priority": 1,
+      "dependsOn": [],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "[Another story]",
+      "description": "...",
+      "acceptanceCriteria": ["..."],
+      "dependsOn": ["US-001"],
       "passes": false,
       "notes": ""
     }
   ]
 }
 ```
+
+### Dependency Tree Structure
+
+Instead of linear `priority`, stories use `dependsOn` to form a tree:
+
+```
+        US-001 (dependsOn: [])     ← Root story, runs first
+        /     \
+   US-002    US-003               ← Both depend on US-001, can run in PARALLEL
+   (dependsOn: ["US-001"])
+        \     /
+        US-004                    ← Depends on both, waits for both
+   (dependsOn: ["US-002", "US-003"])
+```
+
+**Key rules:**
+- Stories with `dependsOn: []` are root stories (run immediately)
+- Stories with same dependencies can run in **parallel**
+- A story only starts when ALL its dependencies have `passes: true`
 
 ---
 
@@ -63,19 +91,27 @@ Ralph spawns a fresh Claude Code instance per iteration with no memory of previo
 
 ---
 
-## Story Ordering: Dependencies First
+## Story Ordering: Dependency Tree
 
-Stories execute in priority order. Earlier stories must not depend on later ones.
+Stories execute based on their `dependsOn` array. A story can only run when ALL its dependencies have `passes: true`.
 
-**Correct order:**
-1. Schema/database changes (migrations)
-2. Server actions / backend logic
-3. UI components that use the backend
-4. Dashboard/summary views that aggregate data
+**Typical dependency layers:**
+1. **Root stories** (`dependsOn: []`) - Schema/database changes, migrations
+2. **Second layer** - Server actions/backend logic depending on schema
+3. **Third layer** - UI components depending on backend
+4. **Final layer** - Integration/summary views depending on multiple components
 
-**Wrong order:**
-1. UI component (depends on schema that does not exist yet)
-2. Schema change
+**Example tree:**
+```
+US-001 (schema)           ← dependsOn: []
+    ├── US-002 (API)      ← dependsOn: ["US-001"]
+    │       └── US-004    ← dependsOn: ["US-002"]
+    └── US-003 (types)    ← dependsOn: ["US-001"]
+            └── US-005    ← dependsOn: ["US-003"]
+                    └── US-006 ← dependsOn: ["US-004", "US-005"]
+```
+
+**Parallel execution:** US-002 and US-003 can run simultaneously. US-004 and US-005 can also run in parallel once their respective dependencies complete.
 
 ---
 
@@ -108,10 +144,10 @@ For stories with testable logic, also include:
 
 ### For stories that change UI, also include:
 ```
-"Verify in browser using Playwright MCP"
+"Verify in browser using agent-browser skill"
 ```
 
-Frontend stories are NOT complete until visually verified. Ralph will use the Playwright MCP to navigate to the page, interact with the UI, and confirm changes work.
+Frontend stories are NOT complete until visually verified. Ralph will load the agent-browser skill to navigate to the page, interact with the UI, and confirm changes work.
 
 ---
 
@@ -119,10 +155,11 @@ Frontend stories are NOT complete until visually verified. Ralph will use the Pl
 
 1. **Each user story becomes one JSON entry**
 2. **IDs**: Sequential (US-001, US-002, etc.)
-3. **Priority**: Based on dependency order, then document order
+3. **dependsOn**: Array of story IDs this story requires (empty `[]` for root stories)
 4. **All stories**: `passes: false` and empty `notes`
 5. **branchName**: Derive from feature name, kebab-case, prefixed with `ralph/`
 6. **Always add**: "Typecheck passes" to every story's acceptance criteria
+7. **Identify parallelizable stories**: Stories that share the same dependencies should have identical `dependsOn` arrays
 
 ---
 
@@ -160,6 +197,15 @@ Add ability to mark tasks with different statuses.
 - Persist status in database
 ```
 
+**Dependency Tree:**
+```
+        US-001 (schema)
+        /     \
+   US-002    US-003  ← Can run in PARALLEL (both depend only on US-001)
+        \     /
+        US-004       ← Depends on both UI stories
+```
+
 **Output prd.json:**
 ```json
 {
@@ -176,7 +222,7 @@ Add ability to mark tasks with different statuses.
         "Generate and run migration successfully",
         "Typecheck passes"
       ],
-      "priority": 1,
+      "dependsOn": [],
       "passes": false,
       "notes": ""
     },
@@ -188,9 +234,9 @@ Add ability to mark tasks with different statuses.
         "Each task card shows colored status badge",
         "Badge colors: gray=pending, blue=in_progress, green=done",
         "Typecheck passes",
-        "Verify in browser using Playwright MCP"
+        "Verify in browser using agent-browser skill"
       ],
-      "priority": 2,
+      "dependsOn": ["US-001"],
       "passes": false,
       "notes": ""
     },
@@ -203,9 +249,9 @@ Add ability to mark tasks with different statuses.
         "Changing status saves immediately",
         "UI updates without page refresh",
         "Typecheck passes",
-        "Verify in browser using Playwright MCP"
+        "Verify in browser using agent-browser skill"
       ],
-      "priority": 3,
+      "dependsOn": ["US-001"],
       "passes": false,
       "notes": ""
     },
@@ -217,15 +263,17 @@ Add ability to mark tasks with different statuses.
         "Filter dropdown: All | Pending | In Progress | Done",
         "Filter persists in URL params",
         "Typecheck passes",
-        "Verify in browser using Playwright MCP"
+        "Verify in browser using agent-browser skill"
       ],
-      "priority": 4,
+      "dependsOn": ["US-002", "US-003"],
       "passes": false,
       "notes": ""
     }
   ]
 }
 ```
+
+**Note:** US-002 and US-003 can be executed in **parallel** since they both only depend on US-001. This saves time compared to sequential execution.
 
 ---
 
@@ -250,11 +298,12 @@ Before writing prd.json, verify:
 
 - [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
 - [ ] Each story is completable in one iteration (small enough)
-- [ ] Stories are ordered by dependency (schema to backend to UI)
+- [ ] **dependsOn arrays are correct** (no circular dependencies, all referenced IDs exist)
+- [ ] **Parallelizable stories identified** (stories that can run together have same dependencies)
 - [ ] Every story has "Typecheck passes" as criterion
-- [ ] UI stories have "Verify in browser using Playwright MCP" as criterion
+- [ ] UI stories have "Verify in browser using agent-browser skill" as criterion
 - [ ] Acceptance criteria are verifiable (not vague)
-- [ ] No story depends on a later story
+- [ ] Root stories have `dependsOn: []`
 
 ---
 

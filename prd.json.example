@@ -12,7 +12,7 @@
         "Generate and run migration successfully",
         "Typecheck passes"
       ],
-      "priority": 1,
+      "dependsOn": [],
       "passes": false,
       "notes": ""
     },
@@ -24,9 +24,9 @@
         "Each task card shows colored priority badge (red=high, yellow=medium, gray=low)",
         "Priority visible without hovering or clicking",
         "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Verify in browser using agent-browser skill"
       ],
-      "priority": 2,
+      "dependsOn": ["US-001"],
       "passes": false,
       "notes": ""
     },
@@ -39,9 +39,9 @@
         "Shows current priority as selected",
         "Saves immediately on selection change",
         "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Verify in browser using agent-browser skill"
       ],
-      "priority": 3,
+      "dependsOn": ["US-001"],
       "passes": false,
       "notes": ""
     },
@@ -54,9 +54,9 @@
         "Filter persists in URL params",
         "Empty state message when no tasks match filter",
         "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Verify in browser using agent-browser skill"
       ],
-      "priority": 4,
+      "dependsOn": ["US-002", "US-003"],
       "passes": false,
       "notes": ""
     }

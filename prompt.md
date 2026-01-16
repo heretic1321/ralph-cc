@@ -8,7 +8,7 @@ You are an autonomous coding agent working on a software project.
 2. Read the progress log at `progress.txt` (check Codebase Patterns section first)
 3. Read `.claude/CLAUDE.md` if it exists (project-wide patterns and commands)
 4. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
-5. Pick the **highest priority** user story where `passes: false`
+5. Pick a **ready** user story (see Story Selection below)
 6. Implement that single user story
 7. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
 8. Create or update AGENTS.md files for folders you modified (see below)
@@ -16,6 +16,26 @@ You are an autonomous coding agent working on a software project.
 10. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
 11. Update the PRD to set `passes: true` for the completed story
 12. Append your progress to `progress.txt`
+
+## Story Selection (Dependency-Based)
+
+Stories use a `dependsOn` array instead of linear priority. A story is **ready** when:
+- `passes: false` (not yet completed)
+- ALL stories in its `dependsOn` array have `passes: true`
+
+**Example:**
+```json
+{
+  "id": "US-003",
+  "dependsOn": ["US-001", "US-002"],
+  "passes": false
+}
+```
+US-003 is ready only when BOTH US-001 and US-002 have `passes: true`.
+
+**Root stories** have `dependsOn: []` and are ready immediately.
+
+**Pick any ready story** - if multiple stories are ready, they can theoretically run in parallel (handled by ralph.sh). Just pick one and implement it.
 
 ## Progress Report Format
 
@@ -241,7 +261,7 @@ npm run build  # Build
 
 ## Browser Testing (Required for Frontend Stories)
 
-For any story that changes UI, you MUST verify it works in the browser using Chrome. Ralph runs with the `--chrome` flag which gives you direct browser access.
+For any story that changes UI, you MUST verify it works in the browser. Load the **agent-browser** skill first, then use it for browser testing.
 
 **What counts as a frontend story:**
 - Any story that adds, modifies, or removes UI elements
@@ -250,7 +270,7 @@ For any story that changes UI, you MUST verify it works in the browser using Chr
 
 **Verification steps:**
 1. Ensure the dev server is running (start it if needed)
-2. Navigate to the relevant page in Chrome
+2. Navigate to the relevant page using agent-browser
 3. **Test EVERY interactive element** you created or modified:
    - Click all buttons and verify they trigger the correct action
    - Fill out forms and verify validation and submission
@@ -263,7 +283,7 @@ For any story that changes UI, you MUST verify it works in the browser using Chr
 5. Take screenshots of key states for the progress log
 
 **A frontend story is NOT complete until:**
-- Every button/interactive element has been manually tested in Chrome
+- Every button/interactive element has been manually tested using agent-browser
 - All expected behaviors work correctly
 - Error states have been tested (where applicable)
 - The feature matches the acceptance criteria visually and functionally

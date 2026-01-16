@@ -5,7 +5,7 @@ description: "Generate a Product Requirements Document (PRD) for a new feature. 
 
 # PRD Generator
 
-Create detailed Product Requirements Documents that are clear, actionable, and suitable for implementation.
+Create detailed Product Requirements Documents that are clear, actionable, and suitable for implementation. Stories are organized as a **dependency tree** to enable parallel execution.
 
 ---
 
@@ -65,10 +65,14 @@ Brief description of the feature and the problem it solves.
 ### 2. Goals
 Specific, measurable objectives (bullet list).
 
-### 3. User Stories
+### 3. User Stories (Dependency Tree)
+
+Stories are organized as a **dependency tree**, not a linear list. This enables parallel execution of independent stories.
+
 Each story needs:
 - **Title:** Short descriptive name
 - **Description:** "As a [user], I want [feature] so that [benefit]"
+- **Depends On:** List of story IDs this story requires (empty for root stories)
 - **Acceptance Criteria:** Verifiable checklist of what "done" means
 
 Each story should be small enough to implement in one focused session.
@@ -76,18 +80,44 @@ Each story should be small enough to implement in one focused session.
 **Format:**
 ```markdown
 ### US-001: [Title]
+**Depends On:** (none - root story)
 **Description:** As a [user], I want [feature] so that [benefit].
 
 **Acceptance Criteria:**
 - [ ] Specific verifiable criterion
 - [ ] Another criterion
 - [ ] Typecheck/lint passes
-- [ ] **[UI stories only]** Verify in browser using Playwright MCP
+- [ ] **[UI stories only]** Verify in browser using agent-browser skill
+
+### US-002: [Title]
+**Depends On:** US-001
+**Description:** As a [user], I want [feature] so that [benefit].
+
+### US-003: [Title]
+**Depends On:** US-001
+**Description:** As a [user], I want [feature] so that [benefit].
+(Note: US-002 and US-003 can run in PARALLEL since they only depend on US-001)
+
+### US-004: [Title]
+**Depends On:** US-002, US-003
+**Description:** As a [user], I want [feature] so that [benefit].
+(Note: US-004 waits for BOTH US-002 and US-003 to complete)
 ```
 
-**Important:** 
+**Dependency Tree Visualization:**
+```
+        US-001 (schema - root)
+        /     \
+   US-002    US-003  ← Can run in parallel
+        \     /
+        US-004       ← Waits for both
+```
+
+**Important:**
 - Acceptance criteria must be verifiable, not vague. "Works correctly" is bad. "Button shows confirmation dialog before deleting" is good.
-- **For any story with UI changes:** Always include "Verify in browser using Playwright MCP" as acceptance criteria. This ensures visual verification of frontend work.
+- **For any story with UI changes:** Always include "Verify in browser using agent-browser skill" as acceptance criteria. This ensures visual verification of frontend work.
+- **Stories with empty dependsOn are root stories** and can start immediately.
+- **Stories sharing the same dependencies can run in parallel.**
 
 ### 4. Functional Requirements
 Numbered list of specific functionalities:
@@ -157,7 +187,17 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 
 ## User Stories
 
+### Dependency Tree
+```
+        US-001 (schema)
+        /     \
+   US-002    US-003  ← Can run in PARALLEL
+        \     /
+        US-004       ← Waits for both
+```
+
 ### US-001: Add priority field to database
+**Depends On:** (none - root story)
 **Description:** As a developer, I need to store task priority so it persists across sessions.
 
 **Acceptance Criteria:**
@@ -166,15 +206,17 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 - [ ] Typecheck passes
 
 ### US-002: Display priority indicator on task cards
+**Depends On:** US-001
 **Description:** As a user, I want to see task priority at a glance so I know what needs attention first.
 
 **Acceptance Criteria:**
 - [ ] Each task card shows colored priority badge (red=high, yellow=medium, gray=low)
 - [ ] Priority visible without hovering or clicking
 - [ ] Typecheck passes
-- [ ] Verify in browser using Playwright MCP
+- [ ] Verify in browser using agent-browser skill
 
 ### US-003: Add priority selector to task edit
+**Depends On:** US-001
 **Description:** As a user, I want to change a task's priority when editing it.
 
 **Acceptance Criteria:**
@@ -182,9 +224,10 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 - [ ] Shows current priority as selected
 - [ ] Saves immediately on selection change
 - [ ] Typecheck passes
-- [ ] Verify in browser using Playwright MCP
+- [ ] Verify in browser using agent-browser skill
 
 ### US-004: Filter tasks by priority
+**Depends On:** US-002, US-003
 **Description:** As a user, I want to filter the task list to see only high-priority items when I'm focused.
 
 **Acceptance Criteria:**
@@ -192,7 +235,7 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 - [ ] Filter persists in URL params
 - [ ] Empty state message when no tasks match filter
 - [ ] Typecheck passes
-- [ ] Verify in browser using Playwright MCP
+- [ ] Verify in browser using agent-browser skill
 
 ## Functional Requirements
 
